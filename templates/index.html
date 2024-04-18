@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html data-bs-theme="light" lang="en">
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, shrink-to-fit=no">
+    <title>Medical Clinic Referrals</title>
+    <link rel="stylesheet" href="{{url_for('static', filename='assets/bootstrap/css/bootstrap.min.css') }}">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Open+Sans&amp;display=swap">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto&amp;display=swap">
+    <link rel="stylesheet" href="{{url_for('static', filename='assets/css/styles.css') }}">
+</head>
+
+<body style="background: var(--bs-link-hover-color);width: 90%;color: var(--bs-body-bg);">
+    <div class="container" style="text-align: left;">
+        <header>
+            <h1 style="font-family: 'Open Sans', sans-serif;padding: 10px;text-align: center;background: var(--bs-link-hover-color);color: var(--bs-body-bg);">Clinic Referrals Compilation Tool</h1>
+        </header>
+        <div class="row">
+            <div class="col">
+                <h3 style="margin: 10px 0px;text-align: center;color: var(--bs-body-bg);">Get referral emails:</h3>
+            </div>
+            <div class="col" style="text-align: center;">
+                <select class="form-control" style="margin: 10px 20px;text-align: center; width: 70%">
+                    <option value="10" selected="">Last 10 emails</option>
+                    <option value="20">Last 20 emails</option>
+                    <option value="50">Last 50 emails</option>
+                </select></div>
+            <div class="col" style="text-align: center;">
+                <button id="loadBtn" class="btn btn-light" type="button" style="text-align: center;margin: 10px 0px;">
+                    <span id="loadSpinner" class="spinner-border spinner-border-sm d-none" role="status"></span> Load Emails
+                </button>
+            </div>
+        </div>
+        <div class="row">
+            <div class="col">
+                <div class="table-responsive refTable">
+                    <table class="table table-striped">
+                        <thead>
+                            <tr>
+                                <th>Email Id</th>
+                                <th>Date received</th>
+                                <th>Referring office</th>
+                                <th>Doctor</th>
+                                <th>Procedure</th>
+                                <th>Booking</th>
+                                <th>Xray</th>
+                                <th>Attachment</th>
+                                <th>Pt phone/name</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tableBody">                                         
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+        <div class="row">
+            <div class="col">
+                <h3 style="margin: 10px 0px;text-align: center;color: var(--bs-body-bg);">All of email data</h3>
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-1"></div>
+            <div class="col" style="text-align: left;">
+                <ul id="emailList">                   
+                </ul>
+            </div>            
+        </div>
+    </div>    
+    <script src="{{url_for('static', filename='assets/bootstrap/js/bootstrap.min.js')}}"></script>
+    <script>
+        document.querySelector('#loadBtn').addEventListener('click', function() {
+            document.querySelector('#loadSpinner').classList.remove('d-none');
+            let emailList = document.querySelector('#emailList');
+            let tableBody = document.querySelector('#tableBody');
+            emailList.innerHTML = '';
+            tableBody.innerHTML = '';
+            fetch('api/emails')
+                .then(response => response.json())
+                .then(data => {
+                    //console.log(data);                    
+                    data['emails'].forEach(item => {
+                        let li = document.createElement('li');
+                        li.textContent = `[ ID=${item.id}, DATE= ${item.date}, FROM=${item.from}, TO=${item.to}, SUBJECT=${item.subject}, BODY=${item.body}, ATTACHMENT=${item.attachments}]`;
+                        //li.textContent = `[ FROM=${item.from}, TO=${item.to}, SUBJECT=${item.subject}, BODY=${item.body}, ATTACHMENT=${item.attachments}]`;
+                        emailList.appendChild(li);
+                    });
+                    data['referrals'].forEach(referral => {
+                        let tr = document.createElement('tr');
+                        dateReceived = new Date(referral.date_received);
+                        tr.innerHTML = `<td>${referral.email_id.slice(1,5)}</td>
+                                        <td>${dateReceived.toLocaleDateString()} ${dateReceived.toLocaleTimeString()}</td>
+                                        <td>${referral.referring_office}</td>
+                                        <td>${referral.doctor}</td>
+                                        <td>${referral.procedure}</td>
+                                        <td>${referral.booking}</td>
+                                        <td>${referral.xray}</td>
+                                        <td>${referral.attachment}</td>
+                                        <td>${referral.patient}</td>`;
+                        tableBody.appendChild(tr);
+                    });
+                    document.querySelector('#loadSpinner').classList.add('d-none');
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    document.querySelector('#loadSpinner').classList.add('d-none');
+                });
+            });
+
+
+    </script>
+</body>
+
+</html>

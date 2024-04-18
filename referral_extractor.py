@@ -1,6 +1,8 @@
-from referral_data import ReferralData, LcReferralDataList
+from referral_data import ReferralData, LcReferralData
 from langchain_anthropic import ChatAnthropic
 from langchain_core.prompts import ChatPromptTemplate
+from typing import List
+import json
 
 class ReferralExtractor:    
     prompt = ChatPromptTemplate.from_messages([
@@ -44,14 +46,21 @@ class ReferralExtractor:
      ''')
     ])    
         
+    @staticmethod
+    def parse_json_to_referral_data(json_data: str) -> List[LcReferralData]:
+        """ Parses a JSON string into a list of LcReferralData objects. """
+        data = json.loads(json_data)
+        return [LcReferralData(**item) for item in data]
+
     
     def __init__(self, model, api_key):
         llm = ChatAnthropic(model=model, 
                             api_key=api_key, 
                             temperature=0, 
-                            max_tokens=1024, 
-                            default_headers={"anthropic-beta": "tools-2024-04-04"})
-        self.chain = ReferralExtractor.prompt | llm.with_structured_output(schema=LcReferralDataList)
+                            max_tokens=1024,)
+                            #default_headers={"anthropic-beta": "tools-2024-04-04"})
+        self.chain = ReferralExtractor.prompt | llm
+    
 
     # Extract referral data from emails
     def extract(self, emails) -> list[ReferralData]:
@@ -60,19 +69,22 @@ class ReferralExtractor:
         input = ' '.join([email.to_string() for email in emails])
         result = self.chain.invoke({"input" : input})
 
+        referrals = ReferralExtractor.parse_json_to_referral_data(result.content)
+
         # We make the hypothesis that the order of the emails in the input is the same as the order of the emails in the result
-        for i in range(len(result.referrals)):
-            ref = result.referrals[i]
+        for i in range(len(referrals)):
+            ref = referrals[i]
             email = emails[i]
-            referral = ReferralData(email_id=email.id,
-                                    date_received=email.date, 
-                                    referring_office=ref.referring_office, 
-                                    doctor=ref.doctor, 
-                                    procedure=ref.procedure, 
-                                    booking=ref.booking, 
-                                    xray=ref.xray, 
-                                    attachment=ref.attachment, 
-                                    patient=ref.patient)
-            referral_list.append(referral)
+            if ref.procedure:  # filter out emails that do not contain a referral
+                referral = ReferralData(email_id=email.id,
+                                        date_received=email.date, 
+                                        referring_office=ref.referring_office, 
+                                        doctor=ref.doctor, 
+                                        procedure=ref.procedure, 
+                                        booking=ref.booking, 
+                                        xray=ref.xray, 
+                                        attachment=ref.attachment, 
+                                        patient=ref.patient)
+                referral_list.append(referral)
 
         return referral_list

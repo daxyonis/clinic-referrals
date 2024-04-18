@@ -21,6 +21,7 @@ class ReferralExtractor:
       -All-On-Four = Full mouth implant procedure
 
       From the emails, you will extract the following information (in json format): 
+      -email_id: the id of the email
       -referring_office (who the message is coming from)
       -doctor (who the message is sent to)
       -procedure: name of medical procedure
@@ -56,8 +57,8 @@ class ReferralExtractor:
     def __init__(self, model, api_key):
         llm = ChatAnthropic(model=model, 
                             api_key=api_key, 
-                            temperature=0, 
-                            max_tokens=1024,)
+                            temperature=0,
+                            max_tokens_to_sample=2048)
                             #default_headers={"anthropic-beta": "tools-2024-04-04"})
         self.chain = ReferralExtractor.prompt | llm
     
@@ -74,9 +75,10 @@ class ReferralExtractor:
         # We make the hypothesis that the order of the emails in the input is the same as the order of the emails in the result
         for i in range(len(referrals)):
             ref = referrals[i]
-            email = emails[i]
-            if ref.procedure:  # filter out emails that do not contain a referral
-                referral = ReferralData(email_id=email.id,
+            # Find email from ref.email_id
+            email = next((email for email in emails if email.short_id==ref.email_id), None)
+            if ref.email_id and ref.procedure:  # filter out emails that do not contain a referral
+                referral = ReferralData(email_id=ref.email_id,
                                         date_received=email.date, 
                                         referring_office=ref.referring_office, 
                                         doctor=ref.doctor, 

@@ -1,8 +1,9 @@
-from typing import Optional, List
+from typing import Optional, List, Any
 from pydantic import BaseModel, Field
 
 class LcReferralData(BaseModel):
     """ Information about a referral  """
+    email_id: Any = Field(description="The id of the email")
     referring_office: Optional[str] = Field(default=None, description="Name of the referring office (who the message is coming from)")
     doctor: Optional[str] = Field(default=None, description="Name of the doctor (who the message is sent to)")
     procedure: Optional[str] = Field(default=None, description="Name of the medical procedure")

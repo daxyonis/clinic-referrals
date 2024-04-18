@@ -23,8 +23,7 @@
             <div class="col" style="text-align: center;">
                 <select class="form-control" style="margin: 10px 20px;text-align: center; width: 70%">
                     <option value="10" selected="">Last 10 emails</option>
-                    <option value="20">Last 20 emails</option>
-                    <option value="50">Last 50 emails</option>
+                    <option value="20">Last 20 emails</option>                    
                 </select></div>
             <div class="col" style="text-align: center;">
                 <button id="loadBtn" class="btn btn-light" type="button" style="text-align: center;margin: 10px 0px;">
@@ -76,20 +75,21 @@
             let tableBody = document.querySelector('#tableBody');
             emailList.innerHTML = '';
             tableBody.innerHTML = '';
-            fetch('api/emails')
+            numEmails = document.querySelector('select').value;
+            fetch(`api/emails?num=${numEmails}`)
                 .then(response => response.json())
                 .then(data => {
                     //console.log(data);                    
                     data['emails'].forEach(item => {
                         let li = document.createElement('li');
-                        li.textContent = `[ ID=${item.id}, DATE= ${item.date}, FROM=${item.from}, TO=${item.to}, SUBJECT=${item.subject}, BODY=${item.body}, ATTACHMENT=${item.attachments}]`;
+                        li.textContent = `[ ID=${item.id.slice(1,5)}, DATE= ${item.date}, FROM=${item.from}, TO=${item.to}, SUBJECT=${item.subject}, BODY=${item.body}, ATTACHMENT=${item.attachments}]`;
                         //li.textContent = `[ FROM=${item.from}, TO=${item.to}, SUBJECT=${item.subject}, BODY=${item.body}, ATTACHMENT=${item.attachments}]`;
                         emailList.appendChild(li);
                     });
                     data['referrals'].forEach(referral => {
                         let tr = document.createElement('tr');
                         dateReceived = new Date(referral.date_received);
-                        tr.innerHTML = `<td>${referral.email_id.slice(1,5)}</td>
+                        tr.innerHTML = `<td>${referral.email_id}</td>
                                         <td>${dateReceived.toLocaleDateString()} ${dateReceived.toLocaleTimeString()}</td>
                                         <td>${referral.referring_office}</td>
                                         <td>${referral.doctor}</td>

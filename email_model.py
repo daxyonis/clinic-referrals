@@ -8,6 +8,13 @@ class Email:
         self.body = body
         self.attachments = attachments
 
+    @property
+    def short_id(self):        
+        if len(self.id) >= 5:
+            return self.id[1:5]
+        else:
+            return self.id
+
     def to_dict(self):
         return {
             'id': self.id,
@@ -20,4 +27,4 @@ class Email:
         }
     
     def to_string(self):
-        return f'[ FROM={self._from}, TO={self.to}, SUBJECT={self.subject}, BODY={self.body}, ATTACHMENT={self.attachments}]'
+        return f'[ ID={self.short_id}, FROM={self._from}, TO={self.to}, SUBJECT={self.subject}, BODY={self.body}, ATTACHMENT={self.attachments}]'
